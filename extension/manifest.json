@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Personal Knowledge OS",
+  "version": "1.0",
+  "description": "Ingests everything you read and builds a knowledge graph.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "public/popup.html"
+  }
+}
