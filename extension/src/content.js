@@ -59,3 +59,21 @@ window.addEventListener('beforeunload', () => {
         });
     }
 });
+
+// Listen for explicit save requests from the popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'FORCE_SAVE') {
+        const data = extractContent();
+        chrome.runtime.sendMessage({
+            type: 'INGEST_PAGE',
+            payload: {
+                ...data,
+                timeSpent: timeOnPage,
+                scrollDepth: maxScrollDepth,
+                timestamp: new Date().toISOString()
+            }
+        });
+        sendResponse({status: "forced_save_sent"});
+    }
+    return true;
+});
