@@ -1,73 +1,115 @@
 # Local Setup Guide: Personal Knowledge OS
 
-This guide will walk you through spinning up the foundation of the Personal Knowledge OS locally, including the underlying databases, the FastAPI backend, and the Chrome extension.
+This guide walks you through running the full Personal Knowledge OS stack locally.
 
 ---
 
-## 1. Start up the Databases
+## Prerequisites
 
-The architecture relies on PostgreSQL, Qdrant, Neo4j, and Redis. We use Docker to host these locally without cluttering your system.
-
-1. Ensure **Docker** is installed and running on your machine.
-2. In the root of the project directory, execute the following command:
-   ```bash
-   docker compose up -d
-   ```
-   *(Note: Linux users might need to run `sudo docker compose up -d` depending on your docker group permissions).*
+- **Docker** installed and running
+- **Python 3.10+** installed
+- **Google Chrome** browser
 
 ---
 
-## 2. Spin up the FastAPI Backend
+## 1. Start the Databases
 
-The backend server is responsible for receiving the data scraped by your browser, routing processing tasks, and performing retrievals. 
+```bash
+# From project root
+sudo docker compose up -d
+```
 
-1. Open a terminal and navigate to the `backend` directory:
-   ```bash
-   cd backend
-   ```
-2. Create and activate a fresh Python virtual environment:
-   ```bash
-   # On macOS/Linux
-   python3 -m venv venv
-   source venv/bin/activate
-   
-   # On Windows
-   
-   python -m venv venv
-   venv\Scripts\activate
-   ```
-3. Install the required Python packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Start the FastAPI development server:
-   ```bash
-   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-   ```
-   *The server will boot up and will listen for requests at `http://localhost:8000`.*
+This spins up:
+- **PostgreSQL** on port `5432`
+- **Qdrant** on port `6333`
+- **Neo4j** on port `7474` (browser) / `7687` (bolt)
+- **Redis** on port `6379`
 
 ---
 
-## 3. Load the Chrome Extension
+## 2. Set up the Backend
 
-The extension acts as your ingestion layer. It injects a script into pages to monitor how long and deep you read, eventually collecting the site content if it meets your learning criteria.
+```bash
+cd backend
 
-1. Open Google Chrome.
-2. Navigate to `chrome://extensions/` in your address bar.
-3. Turn on **Developer mode** via the toggle switch in the top right corner.
-4. Click the **Load unpacked** button in the top left.
-5. In your file browser, select the `extension` folder located inside the root project directory.
-6. The extension is now installed and active!
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate   # Linux/Mac
+# venv\Scripts\activate    # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Download the spaCy English model
+python -m spacy download en_core_web_sm
+```
 
 ---
 
-## 4. Verify the Pipeline
+## 3. Start the FastAPI Server
 
-To make sure your ingestion pipeline is wired correctly end-to-end:
+```bash
+# From backend/ directory, with venv activated
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
 
-1. Keep the terminal that is running your FastAPI server visible on your screen.
-2. Navigate to a text-heavy website (like a Wikipedia article).
-3. Read on the page for **longer than 30 seconds**.
-4. Scroll continuously until you've reached at least **40% depth** into the page.
-5. Close the tab or navigate away.
-6. Look at your FastAPI terminal. You should instantly see a confirmation log validating that the extension posted your site footprint successfully!
+Verify it's running: open `http://localhost:8000` in your browser — you should see `{"status":"healthy"}`.
+
+---
+
+## 4. Start the Celery Worker
+
+Open a **second terminal** tab:
+
+```bash
+cd backend
+source venv/bin/activate
+celery -A app.core.celery_app worker --loglevel=info
+```
+
+This worker processes ingested pages in the background (chunking, embedding, entity extraction).
+
+---
+
+## 5. Load the Chrome Extension
+
+1. Open Chrome and navigate to `chrome://extensions/`
+2. Toggle **Developer mode** ON (top right)
+3. Click **Load unpacked**
+4. Select the `extension/` folder from the project root
+
+---
+
+## 6. Test the Full Pipeline
+
+### Ingestion Test
+1. Navigate to any long article (e.g. a Wikipedia page)
+2. Click the extension icon → **Force Save Current Page**
+3. Watch the Celery terminal for processing logs
+
+### Query Test
+```bash
+curl -X POST http://localhost:8000/api/v1/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What did I read about Linux?", "top_k": 5}'
+```
+
+The response will contain:
+- `context` — assembled parent chunks relevant to your query
+- `sources` — URLs and titles of source pages
+- Retrieval statistics
+
+---
+
+## Stopping Everything
+
+```bash
+# Stop Docker containers
+sudo docker compose down
+
+# Stop Celery worker
+# Press Ctrl+C in the Celery terminal
+
+# Stop FastAPI server
+# Press Ctrl+C in the uvicorn terminal
+```
