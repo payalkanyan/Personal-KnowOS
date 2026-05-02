@@ -186,11 +186,13 @@ Cross-encoder re-rank top-20 candidates down to top-5.
 
 ---
 
-#### Step 5 — Context Assembly & Generation
+#### Step 5 — Agentic Synthesis (LangGraph)
+Query execution is orchestrated by a stateful **LangGraph** AI agent. 
 
-For each retrieved child chunk, fetch its parent chunk (parent-child retrieval). Assemble context window. Pass to Claude with a citations instruction. Return answer + source URLs.
+The agent acts as a router, deciding autonomously whether to use the `search_personal_knowledge` tool (which triggers steps 1-4) or a `search_live_web` tool (using DuckDuckGo) for current events. 
+
+It loops through tool execution until satisfied, then synthesizes a final answer with strict source citations.
 
 ```
-Child chunk (256 tokens) → fetch parent (1024 tokens) → send parent to LLM
+Child chunk → fetch parent → Tool Result → Agent State → LLM Synthesis
 ```
-

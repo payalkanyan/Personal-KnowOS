@@ -91,16 +91,9 @@ This worker processes ingested pages in the background (chunking, embedding, ent
 3. Watch the Celery terminal for processing logs
 
 ### Query Test
-```bash
-curl -X POST http://localhost:8000/api/v1/query \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What did I read about Linux?", "top_k": 5}'
-```
-
-The response will contain:
-- `context` — assembled parent chunks relevant to your query
-- `sources` — URLs and titles of source pages
-- Retrieval statistics
+1. Click the extension icon in your Chrome toolbar.
+2. Type a query like "What did I read about Linux?" or "What's the latest news about AI?"
+3. Press **Ask Agent**. The LangGraph Agent will autonomously decide whether to search your personal database or the live web, and synthesize an answer natively in the extension UI with citations.
 
 ---
 
