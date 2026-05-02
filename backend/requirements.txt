@@ -11,3 +11,7 @@ pydantic
 pydantic-settings
 sqlalchemy
 google-genai
+langchain
+langgraph
+langchain-google-genai
+duckduckgo-search
