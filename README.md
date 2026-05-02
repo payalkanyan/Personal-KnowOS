@@ -4,7 +4,42 @@ A production-grade system that ingests everything you read and write, builds a k
 
 ---
 
-## Table of Contents
+## Architecture Flow
+
+### 1. Ingestion Pipeline
+```mermaid
+graph TD
+    A[Chrome Extension] -->|Capture Context| B[FastAPI /ingest]
+    B -->|Async Task| C[Celery Worker]
+    C --> D[(Redis - Dedup)]
+    C --> P[(PostgreSQL - Meta)]
+    C --> E[Chunk & Embed]
+    E --> F[(Qdrant - Vectors)]
+    C --> G[spaCy NER]
+    G --> H[(Neo4j - Graph)]
+```
+
+### 2. Agentic Retrieval Pipeline
+```mermaid
+graph TD
+    I[Extension UI] -->|Query| J[FastAPI /query]
+    J --> K[LangGraph Agent]
+    
+    K -->|Tool: Web| L[DuckDuckGo Search]
+    K -->|Tool: Personal DB| M[Hybrid Search]
+    
+    M --> N[Vector Search]
+    M --> O[Graph Search]
+    N --> Q[RRF & Cross-Encoder]
+    O --> Q
+    Q --> R[Parent Assembly]
+    R --> K
+    
+    K --> S[Gemini Synthesis]
+    S --> T[Answer + Citations]
+```
+
+---
 
 1. [Ingestion Layer](#1-ingestion-layer)
 2. [Processing Pipeline](#2-processing-pipeline)
