@@ -1,15 +1,19 @@
 // Force Save functionality
 document.getElementById('saveBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveBtn');
     try {
         const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
         chrome.tabs.sendMessage(tab.id, {type: 'FORCE_SAVE'});
-        document.getElementById('saveBtn').innerText = "Sent!";
+        btn.innerText = "Ingesting into Brain...";
+        btn.style.background = "#eef2ff";
+        btn.style.color = "#4f46e5";
     } catch (e) {
         console.error(e);
-        document.getElementById('saveBtn').innerText = "Failed (Reload tab)";
+        btn.innerText = "Failed (Reload tab)";
     }
     setTimeout(() => {
-        document.getElementById('saveBtn').innerText = "Force Save Current Page";
+        btn.innerText = "Save Page to Brain";
+        btn.style.background = "transparent";
     }, 2000);
 });
 
@@ -23,42 +27,63 @@ document.getElementById('searchBtn').addEventListener('click', async () => {
     if (!query) return;
 
     searchBtn.disabled = true;
-    searchBtn.innerText = "Searching & Thinking...";
-    resultsArea.innerHTML = "<em>Connecting to brain...</em>";
-
-    try {
-        const response = await fetch('http://localhost:8000/api/v1/query', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: query, top_k: 3 })
-        });
-
-        if (!response.ok) throw new Error("Server Error");
-
-        const data = await response.json();
+    searchBtn.innerHTML = `Thinking<span class="thinking"></span>`;
+    
+    // Smooth transition reset
+    resultsArea.classList.remove('active');
+    
+    setTimeout(async () => {
+        resultsArea.innerHTML = "";
+        resultsArea.classList.add('active');
         
-        if (data.error) {
-            resultsArea.innerHTML = `<span style="color:red">Error: ${data.error}</span>`;
-            return;
-        }
-
-        // Render Answer
-        let html = `<p><strong>Answer:</strong><br/> ${data.answer.replace(/\n/g, '<br>')}</p>`;
-        
-        // Render Sources
-        if (data.sources && data.sources.length > 0) {
-            html += `<hr><p><strong>Sources:</strong></p>`;
-            data.sources.forEach((s, i) => {
-                html += `<a class="source-link" href="${s.url}" target="_blank" title="${s.url}">[${i+1}] ${s.title} (Rel: ${s.relevance})</a>`;
+        try {
+            const response = await fetch('http://localhost:8000/api/v1/query', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: query, top_k: 3 })
             });
-        }
-        
-        resultsArea.innerHTML = html;
 
-    } catch (err) {
-        resultsArea.innerHTML = `<span style="color:red">Failed to connect to local backend. Is uvicorn running?</span>`;
-    } finally {
-        searchBtn.disabled = false;
-        searchBtn.innerText = "Search";
+            if (!response.ok) throw new Error("Server Error");
+
+            const data = await response.json();
+            
+            if (data.error) {
+                resultsArea.innerHTML = `<span style="color:#ef4444; font-weight:500;">Error: ${data.error}</span>`;
+                return;
+            }
+
+            // Format Answer
+            let answerStr = data.answer || "No answer returned.";
+            // Simple markdown parsing for bold and paragraphs
+            const formattedAnswer = answerStr
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            let html = `<div class="answer-box"><p style="margin-top:0;">${formattedAnswer}</p></div>`;
+            
+            // Render Sources
+            if (data.sources && data.sources.length > 0) {
+                html += `<div style="font-size:0.75rem; color:#64748b; margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Citations</div>`;
+                data.sources.forEach((s, i) => {
+                    html += `<a class="source-link" href="${s.url}" target="_blank" title="${s.url}">[${i+1}] ${s.url}</a>`;
+                });
+            }
+            
+            resultsArea.innerHTML = html;
+
+        } catch (err) {
+            resultsArea.innerHTML = `<span style="color:#ef4444; font-weight:500;">Failed to connect to backend. Is Uvicorn running?</span>`;
+        } finally {
+            searchBtn.disabled = false;
+            searchBtn.innerText = "Ask Agent";
+        }
+    }, 300); // Wait for collapse animation before fetching/showing
+});
+
+// Allow pressing Enter to search
+document.getElementById('queryInput').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        document.getElementById('searchBtn').click();
     }
 });
