@@ -3,13 +3,32 @@
 <head>
     <title>PK OS</title>
     <style>
-        body { width: 300px; padding: 15px; font-family: sans-serif; }
-        .btn { padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
+        body { width: 350px; padding: 15px; font-family: sans-serif; background-color: #f9f9f9; }
+        h3 { margin-top: 0; color: #333; }
+        .section { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn { padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
+        .btn:hover { background: #0056b3; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        #resultsArea { margin-top: 15px; font-size: 0.9em; color: #444; max-height: 300px; overflow-y: auto; }
+        .source-link { display: block; font-size: 0.8em; color: #007bff; text-decoration: none; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .source-link:hover { text-decoration: underline; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 10px 0; }
     </style>
 </head>
 <body>
     <h3>Personal Knowledge OS</h3>
-    <button class="btn" id="saveBtn">Force Save Current Page</button>
+    
+    <div class="section">
+        <button class="btn" id="saveBtn">Force Save Current Page</button>
+    </div>
+
+    <div class="section">
+        <input type="text" id="queryInput" placeholder="Ask your knowledge base..." />
+        <button class="btn" id="searchBtn">Search</button>
+        <div id="resultsArea"></div>
+    </div>
+
     <script src="popup.js"></script>
 </body>
 </html>

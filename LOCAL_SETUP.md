@@ -42,6 +42,9 @@ pip install -r requirements.txt
 
 # Download the spaCy English model
 python -m spacy download en_core_web_sm
+
+# Set your Gemini API Key for synthesis
+export GEMINI_API_KEY="your-api-key-here"
 ```
 
 ---

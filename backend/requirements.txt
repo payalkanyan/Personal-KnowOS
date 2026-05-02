@@ -10,3 +10,4 @@ spacy
 pydantic
 pydantic-settings
 sqlalchemy
+google-genai

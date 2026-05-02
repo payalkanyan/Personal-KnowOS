@@ -193,3 +193,4 @@ For each retrieved child chunk, fetch its parent chunk (parent-child retrieval).
 ```
 Child chunk (256 tokens) → fetch parent (1024 tokens) → send parent to LLM
 ```
+

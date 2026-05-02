@@ -7,5 +7,6 @@ class Settings:
     NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
     NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password123")
     POSTGRES_URL = os.getenv("POSTGRES_URL", "postgresql://postgres:password@localhost:5432/personal_knowledge")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 settings = Settings()

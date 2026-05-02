@@ -25,13 +25,13 @@ def graph_search(query: str, top_k: int = 10) -> list:
         result = session.run(
             """
             MATCH (d:Document)-[:MENTIONS]->(e:Entity)
-            WHERE toLower($query) CONTAINS toLower(e.name)
+            WHERE toLower($search_term) CONTAINS toLower(e.name)
             RETURN d.title AS title, d.url AS url, d.fingerprint AS fingerprint,
                    collect(DISTINCT e.name) AS matched_entities
             ORDER BY size(collect(DISTINCT e.name)) DESC
             LIMIT $top_k
             """,
-            query=query, top_k=top_k
+            search_term=query, top_k=top_k
         )
         
         hits = []

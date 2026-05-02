@@ -5,6 +5,7 @@ from app.services.vector_search import vector_search
 from app.services.graph_search import graph_search
 from app.services.fusion import reciprocal_rank_fusion
 from app.services.reranker import rerank
+from app.core.config import settings
 
 app = FastAPI(
     title="Personal Knowledge OS API",
@@ -91,8 +92,41 @@ async def query_knowledge(request: Request):
 
         assembled_context = "\n\n---\n\n".join(context_blocks)
 
+        # Step 5: Synthesize Answer with Gemini
+        answer = "No relevant context found to answer the query."
+        if assembled_context.strip() and settings.GEMINI_API_KEY:
+            try:
+                from google import genai
+                client = genai.Client(api_key=settings.GEMINI_API_KEY)
+                
+                prompt = f"""
+You are a helpful Personal Knowledge Assistant.
+Answer the user's query using ONLY the provided context blocks below.
+If the context does not contain the answer, politely say that you don't have that information in your knowledge base.
+Be concise but comprehensive.
+
+CONTEXT:
+{assembled_context}
+
+QUERY:
+{query}
+"""
+                print(f"[Query] Calling Gemini for synthesis...")
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt,
+                )
+                answer = response.text
+                print(f"[Query] Gemini synthesis complete.")
+            except Exception as e:
+                print(f"[Query] Gemini synthesis failed: {e}")
+                answer = "Error generating answer from LLM."
+        elif not settings.GEMINI_API_KEY:
+             answer = "GEMINI_API_KEY not set in backend. Skipping synthesis."
+
         return {
             "query": query,
+            "answer": answer,
             "context": assembled_context,
             "sources": sources,
             "total_chunks_searched": len(vector_results),
